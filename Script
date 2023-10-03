@@ -1,0 +1,161 @@
+-- Locals
+
+local Root
+local Items = {}
+local SelectedItem
+local PerfectItemPrice = 0
+local PerfectItemName = "None"
+
+-- Setting Up The Items Table
+for i, v in pairs(game:GetService("ReplicatedStorage").ITEMS:GetChildren()) do
+ if not table.find(Items, v.Name) then
+  table.insert(Items, v.Name)
+ end
+end
+
+-- Script Functions
+function Buy(Item)
+ game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BuyItem"):InvokeServer(Item)
+end
+
+function AutoRebirth()
+ game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Rebirth"):FireServer()
+end
+
+function Autoburn()
+ for i, v in pairs(game:GetService("Workspace").BURNABLES:GetChildren()) do
+  if v.Name == game:GetService("Players").LocalPlayer.Name then
+   Root = tostring(v.Name)
+   if game:GetService("Players").LocalPlayer.Character:FindFirstChild("Blowtorch") then
+    for i, v in pairs(game:GetService("Workspace").BURNABLES[Root]:GetChildren()) do
+     game:GetService("Players").LocalPlayer.Character.Blowtorch.FIRE:FireServer(game:GetService("Workspace"):WaitForChild("BURNABLES"):WaitForChild(Root):WaitForChild(tostring(v.Name)))
+    end
+   else
+    for i, v in pairs(game:GetService("Workspace").BURNABLES[Root]:GetChildren()) do
+     game:GetService("Players").LocalPlayer.Backpack.Blowtorch.FIRE:FireServer(game:GetService("Workspace"):WaitForChild("BURNABLES"):WaitForChild(Root):WaitForChild(tostring(v.Name)))
+    end
+   end
+  end
+ end
+end
+
+function AutoPurchase()
+ for i, v in pairs(game:GetService("Players").LocalPlayer.PlayerGui.Shop.Frame.ScrollingFrame:GetChildren()) do
+  if v:IsA("Frame") and v.cost.Value < game:GetService("Players").LocalPlayer.leaderstats.Money.Value and v.cost.Value > PerfectItemPrice then
+   PerfectItemPrice = tonumber(v.cost.Value)
+   print(v.Name)
+  end
+ end
+ for i, v in pairs(game:GetService("ReplicatedStorage").ITEMS:GetChildren()) do
+  local getprice = require(v)
+  if getprice.cost == PerfectItemPrice then
+   PerfectItemName = tostring(v.Name)
+   print(v.Name, getprice.cost)
+  end
+ end
+ Buy(PerfectItemName)
+end
+
+-- Loading The Script
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({
+ Name = "Burning Blitz (https://dsc.gg/boatblitz)",
+ HidePremium = false,
+ SaveConfig = true,
+ ConfigFolder = "OrionTest",
+ IntroText = "Burn Stuff And Get Rich"
+})
+
+
+local Tab = Window:MakeTab({
+ Name = "Autofarm",
+ Icon = "rbxassetid://4483345998",
+ PremiumOnly = false
+})
+local Section = Tab:AddSection({
+ Name = "Autofarm"
+})
+Tab:AddToggle({
+ Name = "Auto Burn",
+ Default = false,
+ Callback = function(Value)
+  getgenv().Autoburn = Value
+  
+  while Autoburn == true do
+   Autoburn()
+   task.wait(1)
+  end
+ end    
+})
+
+Tab:AddToggle({
+ Name = "Auto Purchase",
+ Default = false,
+ Callback = function(Value)
+  getgenv().AutoPurch = Value
+  
+  while AutoPurch == true do
+   AutoPurchase()
+   task.wait(2)
+  end
+ end    
+})
+
+Tab:AddToggle({
+ Name = "Auto Rebirth",
+ Default = false,
+ Callback = function(Value)
+  getgenv().Rebirthing = Value
+  
+  while Rebirthing == true do
+   AutoRebirth()
+   task.wait(10)
+  end
+ end    
+}) 
+
+local Tab = Window:MakeTab({
+ Name = "Misc",
+ Icon = "rbxassetid://4483345998",
+ PremiumOnly = false
+})
+
+local Section = Tab:AddSection({
+ Name = "Auto Buy"
+})
+
+Tab:AddDropdown({
+ Name = "Selected Item",
+ Default = "None",
+ Options = Items,
+ Callback = function(Value)
+  SelectedItem = Value
+ end    
+})
+
+Tab:AddToggle({
+ Name = "Autobuy Item",
+ Default = false,
+ Callback = function(Value)
+  getgenv().Autobuy = Value
+  
+  while Autobuy == true do
+   Buy(SelectedItem)
+   task.wait(2)
+  end
+ end    
+})
+
+local Section = Tab:AddSection({
+ Name = "Others"
+})
+
+
+Tab:AddButton({
+ Name = "Get Flamethrower",
+ Callback = function()
+  local FreeFlamethrower = game:GetService("ReplicatedStorage").Flamethrower:Clone()
+  FreeFlamethrower.Parent = game:GetService("Players").LocalPlayer.Backpack
+ end    
+})
+OrionLib:Init()
